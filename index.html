@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next Up Pro - Tablero de Estudio Dinámico</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --bg: #090d16;
+            --card-bg: #111827;
+            --text: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: #1f2937;
+            --gold: #f59e0b;
+        }
+
+        /* TEMAS DE COLOR GLOBALES */
+        body.theme-original { --bg: #090d16; --card-bg: #111827; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; --primary: #0284c7; --accent: #38bdf8; }
+        body.theme-black { --bg: #000000; --card-bg: #121212; --text: #ffffff; --text-muted: #a1a1aa; --border: #27272a; --primary: #3b82f6; --accent: #60a5fa; }
+        body.theme-white { --bg: #f8fafc; --card-bg: #ffffff; --text: #0f172a; --text-muted: #64748b; --border: #cbd5e1; --primary: #0284c7; --accent: #0284c7; }
+        body.theme-pink { --bg: #fff1f2; --card-bg: #ffe4e6; --text: #881337; --text-muted: #9f1239; --border: #fecdd3; --primary: #e11d48; --accent: #f43f5e; }
+        body.theme-skyblue { --bg: #f0fdf4; --card-bg: #e0f2fe; --text: #0c4a6e; --text-muted: #0369a1; --border: #bae6fd; --primary: #0284c7; --accent: #38bdf8; }
+        body.theme-purple { --bg: #fdf4ff; --card-bg: #fae8ff; --text: #581c87; --text-muted: #7e22ce; --border: #f5d0fe; --primary: #9333ea; --accent: #a855f7; }
+        body.theme-gray { --bg: #f3f4f6; --card-bg: #e5e7eb; --text: #1f2937; --text-muted: #4b5563; --border: #d1d5db; --primary: #4b5563; --accent: #6b7280; }
+        body.theme-green { --bg: #f0fdf4; --card-bg: #dcfce7; --text: #064e3b; --text-muted: #047857; --border: #bbf7d0; --primary: #059669; --accent: #10b981; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; -webkit-user-select: none; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; padding: 20px; transition: background 0.3s, color 0.3s; }
+
+        header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            padding: 25px; 
+            background: var(--card-bg); 
+            border-radius: 14px; 
+            border: 1px solid var(--border);
+            position: relative;
+        }
+        .streak-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .coins-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .coins-badge:hover { transform: scale(1.05); }
+
+        #coin-toast {
+            display: none;
+            position: fixed;
+            top: 25px;
+            right: 50%;
+            transform: translateX(50%);
+            background: var(--gold);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        header h1 { color: var(--accent); font-size: 2rem; margin-bottom: 5px; }
+        header p { color: var(--text-muted); font-size: 0.95rem; font-style: italic; }
+
+        .nav-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; flex-wrap: wrap; }
+        .tab-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); border-color: var(--primary); color: white; }
+
+        .section { display: none; background: var(--card-bg); padding: 25px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .section.active { display: block; }
+
+        h2 { color: var(--accent); margin-bottom: 15px; font-size: 1.4rem; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+
+        .block-creator {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        input, select, textarea {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            width: 100%;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn:hover { background: var(--primary-dark); }
+
+        .blocks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .subject-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .subject-card:hover { border-color: var(--accent); }
+        .subject-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .subject-title-area { display: flex; align-items: center; gap: 10px; cursor: pointer; flex-grow: 1; }
+        .subject-title { font-size: 1.2rem; color: var(--accent); font-weight: bold; }
+        .subject-info { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; }
+        
+        .priority-controls { display: flex; gap: 5px; }
+
+        .block-detail-view { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .back-btn { background: #374151; margin-bottom: 15px; padding: 6px 14px; font-size: 0.85rem; }
+
+        /* STICKERS ANIMADOS */
+        .animated-sticker { font-size: 2.2rem; display: inline-block; }
+        .sticker-heart { animation: heartbeat 1.2s infinite ease-in-out; }
+        .sticker-neuron { animation: pulseGlow 2s infinite alternate; }
+        .sticker-fire { animation: flicker 1s infinite alternate; }
+        .sticker-gear { animation: spinGear 4s linear infinite; }
+        .sticker-dog { animation: bounceSlow 1.5s infinite ease-in-out; }
+        .sticker-star { animation: twinkle 1.5s infinite alternate; }
+
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        @keyframes pulseGlow { 0% { transform: scale(1); filter: drop-shadow(0 0 2px var(--accent)); } 100% { transform: scale(1.1); filter: drop-shadow(0 0 8px var(--accent)); } }
+        @keyframes flicker { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-3px) scale(1.1); } }
+        @keyframes spinGear { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes bounceSlow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes twinkle { 0% { opacity: 0.6; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1.15); } }
+
+        .kanban-subgrid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        @media(max-width: 900px) { .kanban-subgrid { grid-template-columns: 1fr; } }
+        .kanban-col {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        .kanban-col h4 { font-size: 0.95rem; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+        .task-list { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        
+        .task-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        .task-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            padding-top: 4px;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+        .task-actions { display: flex; gap: 4px; }
+        .action-btn { background: var(--border); border: none; color: var(--text); padding: 3px 6px; border-radius: 4px; cursor: pointer; }
+        .action-btn:hover { background: var(--primary); }
+
+        /* TIENDA */
+        .category-title { color: var(--gold); margin: 25px 0 10px; font-size: 1.1rem; border-bottom: 1px dashed var(--border); padding-bottom: 4px; }
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .shop-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* HERRAMIENTAS: NOTAS Y POST-ITS */
+        .tool-box { background: var(--bg); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .quick-notes { width: 100%; background: var(--card-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 12px; resize: vertical; min-height: 180px; font-size: 0.95rem; }
+        
+        .postits-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .postit-card {
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .postit-textarea {
+            background: transparent;
+            border: none;
+            width: 100%;
+            resize: vertical;
+            font-size: 0.9rem;
+            outline: none;
+            font-family: inherit;
+            min-height: 80px;
+        }
+        .postit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        /* PIZARRA PRO APARTE CON ZOOM */
+        .whiteboard-container {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            position: relative;
+        }
+        .whiteboard-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+            background: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .wb-btn {
+            background: var(--border);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .wb-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .wb-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: auto; /* Permite hacer scroll al hacer zoom */
+            touch-action: none; /* Evita gestos predeterminados molestos en tabletas */
+        }
+        canvas {
+            background: transparent;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            transform-origin: 0 0;
+        }
+        .canvas-sticker-item {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            display: inline-block;
+            padding: 5px;
+            z-index: 10;
+        }
+
+        /* CONFIGURACIÓN Y CUENTA */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media(max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } }
+        .theme-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .theme-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            background: var(--card-bg);
+            color: var(--text);
+            transition: 0.2s;
+        }
+        .theme-pill:hover { border-color: var(--primary); }
+    </style>
+</head>
+<body class="theme-original">
+
+    <div id="coin-toast">💡 ¡Completa tus tareas para generar monedas y desbloquear stickers!</div>
+
+    <header>
+        <div class="streak-badge">⚡ Racha: <span id="user-streak">1</span> días</div>
+        <div class="coins-badge" onclick="toggleCoinMessage()" title="Haz clic para ver cómo ganar monedas">🪙 <span id="user-coins">15</span> Monedas</div>
+        <h1>Next Up Pro</h1>
+        <p>“Organiza tus bloques, prioriza materias y diseña con stickers animados por ID.”</p>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('board')">📋 Mis Bloques</button>
+        <button class="tab-btn" onclick="switchTab('shop')">🛒 Tienda (ID)</button>
+        <button class="tab-btn" onclick="switchTab('notes')">🛠️ Notas</button>
+        <button class="tab-btn" onclick="switchTab('whiteboard')">🎨 Pizarra Pro</button>
+        <button class="tab-btn" onclick="switchTab('settings')">⚙️ Cuenta & Tema</button>
+    </div>
+
+    <!-- SECCIÓN 1: TABLEROS Y BLOQUES -->
+    <div id="board" class="section active">
+        <div id="main-view">
+            <h2>Crear Nueva Materia / Bloque</h2>
+            <div class="block-creator">
+                <input type="text" id="new-block-name" placeholder="Ej: Bioquímica, Fisiología, Historia...">
+                <button class="btn" onclick="addStudyBlock()">➕ Crear Bloque</button>
+            </div>
+
+            <h2>Tus Bloques de Estudio (Usa las flechas para priorizar)</h2>
+            <div class="blocks-grid" id="blocks-grid-container"></div>
+        </div>
+
+        <div id="detail-view" style="display: none;"></div>
+    </div>
+
+    <!-- SECCIÓN 2: TIENDA -->
+    <div id="shop" class="section">
+        <h2>Tienda de Stickers Animados (Con IDs de 3 dígitos)</h2>
+        <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.9rem;">Usa el número ID (ej: 001, 101) para cambiar el sticker de tus bloques.</p>
+        <div id="shop-categories-container"></div>
+    </div>
+
+    <!-- SECCIÓN 3: NOTAS Y POST-ITS -->
+    <div id="notes" class="section">
+        <h2>Herramientas de Notas</h2>
+        <div class="tool-box" style="margin-bottom: 20px;">
+            <h3>📝 Bloc de Notas Automático</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Tus apuntes generales se guardan solos.</p>
+            <textarea id="quick-notes" class="quick-notes" placeholder="Escribe tus apuntes rápidos aquí..." oninput="saveNotes()"></textarea>
+        </div>
+
+        <div class="tool-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>📌 Notas Rápidas Adhesivas (Post-its con Colores)</h3>
+                <button class="btn" style="padding: 6px 12px; font-size: 0.85rem;" onclick="addPostIt()">➕ Nueva Nota Adhesiva</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Cambia el color de cada nota; el texto se adaptará automáticamente para que se vea claro.</p>
+            <div class="postits-container" id="postits-container"></div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 4: PIZARRA PRO APARTE CON ZOOM -->
+    <div id="whiteboard" class="section">
+        <h2>Pizarra de Estudio Profesional</h2>
+        <div class="whiteboard-container">
+            <div class="whiteboard-toolbar">
+                <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">Herramienta:</span>
+                <button class="wb-btn active" id="tool-pencil" onclick="setWbTool('pencil')">✏️ Lápiz</button>
+                <button class="wb-btn" id="tool-pen" onclick="setWbTool('pen')">✒️ Lapicero</button>
+                <button class="wb-btn" id="tool-marker" onclick="setWbTool('marker')">🖍️ Marcador</button>
+                <button class="wb-btn" id="tool-highlighter" onclick="setWbTool('highlighter')">✨ Resaltador</button>
+                <button class="wb-btn" id="tool-eraser" onclick="setWbTool('eraser')">🧹 Borrador</button>
+                <button class="wb-btn" id="tool-shape" onclick="setWbTool('shape')">⬜ Cuadro</button>
+                <button class="wb-btn" id="tool-text" onclick="setWbTool('text')">⌨️ Teclado Texto</button>
+                <button class="wb-btn" onclick="addStickerToBoard()" style="background: var(--warning); border-color: var(--warning); color: #000;">🐾 Sticker</button>
+
+                <div style="display: flex; align-items: center; gap: 4px; margin-left: 5px;">
+                    <button class="wb-btn" onclick="zoomOut()" title="Alejar">🔍-</button>
+                    <span id="zoom-level-label" style="font-size: 0.8rem; font-weight: bold; min-width: 40px; text-align: center;">100%</span>
+                    <button class="wb-btn" onclick="zoomIn()" title="Acercar">🔍+</button>
+                    <button class="wb-btn" onclick="resetZoom()" title="Restablecer Zoom">1:1</button>
+                </div>
+
+                <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;" id="color-picker-wrapper">
+                    <span style="font-size: 0.85rem; font-weight: bold;">Color:</span>
+                    <input type="color" id="wb-color" value="#0284c7" style="width: 35px; height: 32px; border: none; cursor: pointer; background: transparent;">
+                </div>
+
+                <button class="wb-btn" style="background: var(--error); border-color: var(--error); color: white;" onclick="clearCanvas()">🗑️ Limpiar</button>
+            </div>
+            
+            <div class="wb-canvas-wrapper" id="canvas-area">
+                <canvas id="drawing-canvas"></canvas>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; text-align: center;">💡 Tip: Usa 🔍+ / 🔍- (o la rueda del mouse) para acercar o alejar la pizarra con total libertad.</p>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 5: CONFIGURACIÓN, TEMAS Y CUENTA -->
+    <div id="settings" class="section">
+        <h2>⚙️ Cuenta, Respaldo y Personalización</h2>
+        <div class="settings-grid">
+            <div class="tool-box">
+                <h3>🎨 Personalización de Color Global</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Elige el tema estético para toda la aplicación:</p>
+                <div class="theme-selector">
+                    <button class="theme-pill" onclick="setTheme('theme-original')">🌌 Original (Predeterminado)</button>
+                    <button class="theme-pill" onclick="setTheme('theme-skyblue')">🌊 Azul Cielo</button>
+                    <button class="theme-pill" onclick="setTheme('theme-white')">☁️ Blanco Clásico</button>
+                    <button class="theme-pill" onclick="setTheme('theme-black')">🌙 Negro Oscuro</button>
+                    <button class="theme-pill" onclick="setTheme('theme-pink')">🌸 Rosa</button>
+                    <button class="theme-pill" onclick="setTheme('theme-purple')">🔮 Morado</button>
+                    <button class="theme-pill" onclick="setTheme('theme-green')">🌿 Verde</button>
+                    <button class="theme-pill" onclick="setTheme('theme-gray')">🪙 Gris</button>
+                </div>
+            </div>
+
+            <div class="tool-box">
+                <h3>🔑 Tu Código Único de Cuenta (Respaldo)</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Copia tu código o ingrésalo para restaurar tu progreso en otro dispositivo:</p>
+                <textarea id="account-code-box" class="quick-notes" style="min-height: 80px; font-size: 0.8rem;" readonly></textarea>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="copyAccountCode()">📋 Copiar Código</button>
+                    <button class="btn" style="padding: 6px 12px; font-size: 0.8rem; background: #374151;" onclick="importAccountCode()">📥 Importar Código</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userCoins = parseInt(localStorage.getItem('nextup_coins')) || 15;
+        let userStreak = parseInt(localStorage.getItem('nextup_streak')) || 1;
+        let currentTheme = localStorage.getItem('nextup_theme') || 'theme-original';
+        document.body.className = currentTheme;
+        
+        // Bloque de Guía de Inicio con 5 tareas
+        let defaultBlocks = [
+            { 
+                id: 999, 
+                name: '🌟 ¡Bienvenido a Next Up Pro! (Guía)', 
+                sticker: 'sticker-heart', 
+                stickerId: '101', 
+                isGuide: true,
+                tasks: [
+                    { id: 9991, title: '👋 ¡Bienvenido! Todo aquí es 100% GRATUITO y sin dinero real. ¡Tu dedicación es lo único que importa!', status: 'todo' },
+                    { id: 9992, title: '🪙 Cómo ganar monedas: Estudia y completa tus tareas pasándolas a "Dominado" para recibir +5 monedas gratis.', status: 'todo' },
+                    { id: 9993, title: '📋 Bloques y Tareas: Organiza tus materias en columnas Kanban (Por Hacer, En Proceso, Dominado) y priorízalas.', status: 'todo' },
+                    { id: 9994, title: '🛒 Tienda de Stickers: Usa el número ID de 3 dígitos (ej: 101, 503) para desbloquear y personalizar tus materias.', status: 'todo' },
+                    { id: 9995, title: '🎨 Herramientas Extra: Usa la Pizarra Pro con zoom y pegatinas, notas automáticas, post-its y código de respaldo.', status: 'todo' }
+                ] 
+            },
+            { 
+                id: 1, 
+                name: 'Anatomía', 
+                sticker: 'sticker-heart', 
+                stickerId: '101', 
+                tasks: [
+                    { id: 101, title: 'Repasar Sistema Nervioso', status: 'todo' }
+                ]
+            }
+        ];
+
+        let blocks = JSON.parse(localStorage.getItem('nextup_blocks'));
+        if (!blocks || blocks.length === 0) {
+            blocks = defaultBlocks;
+        }
+
+        let unlockedStickers = JSON.parse(localStorage.getItem('nextup_unlocked')) || ['101', '001', '503'];
+        let activeBlockId = null;
+
+        let lastLogin = localStorage.getItem('nextup_lastlogin');
+        let todayStr = new Date().toDateString();
+        if (lastLogin !== todayStr) {
+            userStreak += 1;
+            localStorage.setItem('nextup_lastlogin', todayStr);
+        }
+
+        let toastTimer = null;
+        function toggleCoinMessage() {
+            let toast = document.getElementById('coin-toast');
+            if (toast.style.display === 'block') {
+                toast.style.display = 'none';
+                clearTimeout(toastTimer);
+            } else {
+                toast.style.display = 'block';
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        const stickerCategories = [
+            {
+                category: '😁 Emociones & Expresiones',
+                items: [
+                    { id: '001', css: 'sticker-dog', icon: '😁', name: 'Risa', cost: 8 },
+                    { id: '002', css: 'sticker-dog', icon: '😂', name: 'Llantos de risa', cost: 8 },
+                    { id: '003', css: 'sticker-heart', icon: '🥰', name: 'Enamorado', cost: 10 },
+                    { id: '004', css: 'sticker-dog', icon: '😜', name: 'Pillo', cost: 8 },
+                    { id: '005', css: 'sticker-dog', icon: '🧐', name: 'Monóculo', cost: 10 },
+                    { id: '006', css: 'sticker-dog', icon: '🤓', name: 'Nerd', cost: 10 },
+                    { id: '007', css: 'sticker-star', icon: '🤩', name: 'Estrellas', cost: 10 },
+                    { id: '008', css: 'sticker-dog', icon: '😏', name: 'Misterioso', cost: 8 },
+                    { id: '009', css: 'sticker-dog', icon: '😨', name: 'Susto', cost: 8 },
+                    { id: '010', css: 'sticker-dog', icon: '😓', name: 'Sudor', cost: 8 },
+                    { id: '011', css: 'sticker-dog', icon: '🤔', name: 'Pensativo', cost: 8 },
+                    { id: '012', css: 'sticker-dog', icon: '🫡', name: 'Saludo', cost: 8 },
+                    { id: '013', css: 'sticker-dog', icon: '🤫', name: 'Silencio', cost: 8 }
+                ]
+            },
+            {
+                category: '🫀 Anatomía, Medicina & Ciencia',
+                items: [
+                    { id: '101', css: 'sticker-heart', icon: '🫀', name: 'Corazón Anatómico', cost: 12 },
+                    { id: '102', css: 'sticker-heart', icon: '🫁', name: 'Pulmones', cost: 12 },
+                    { id: '103', css: 'sticker-neuron', icon: '🧠', name: 'Cerebro', cost: 15 },
+                    { id: '104', css: 'sticker-gear', icon: '👂', name: 'Oído', cost: 10 },
+                    { id: '105', css: 'sticker-gear', icon: '👄', name: 'Boca', cost: 10 },
+                    { id: '106', css: 'sticker-gear', icon: '👀', name: 'Ojos', cost: 10 },
+                    { id: '107', css: 'sticker-gear', icon: '🩺', name: 'Estetoscopio', cost: 15 },
+                    { id: '108', css: 'sticker-gear', icon: '🔬', name: 'Microscopio', cost: 15 },
+                    { id: '109', css: 'sticker-gear', icon: '⚗️', name: 'Matraz', cost: 12 },
+                    { id: '110', css: 'sticker-gear', icon: '💉', name: 'Jeringa', cost: 12 },
+                    { id: '111', css: 'sticker-gear', icon: '💊', name: 'Pastilla', cost: 10 },
+                    { id: '112', css: 'sticker-gear', icon: '🦠', name: 'Virus', cost: 12 },
+                    { id: '113', css: 'sticker-gear', icon: '🩸', name: 'Gota Sangre', cost: 12 },
+                    { id: '114', css: 'sticker-gear', icon: '🧪', name: 'Tubo Ensayo', cost: 12 },
+                    { id: '115', css: 'sticker-gear', icon: '🌡️', name: 'Termómetro', cost: 10 },
+                    { id: '116', css: 'sticker-gear', icon: '🧫', name: 'Placa Petri', cost: 12 },
+                    { id: '117', css: 'sticker-gear', icon: '🩹', name: 'Curita', cost: 10 },
+                    { id: '118', css: 'sticker-gear', icon: '🧬', name: 'ADN', cost: 15 },
+                    { id: '119', css: 'sticker-gear', icon: '🩻', name: 'Radiografía', cost: 15 }
+                ]
+            },
+            {
+                category: '👩‍⚕️ Profesiones & Personas',
+                items: [
+                    { id: '201', css: 'sticker-dog', icon: '👮‍♀️', name: 'Policía F', cost: 12 },
+                    { id: '202', css: 'sticker-dog', icon: '👮', name: 'Policía', cost: 12 },
+                    { id: '203', css: 'sticker-dog', icon: '👮‍♂️', name: 'Policía M', cost: 12 },
+                    { id: '204', css: 'sticker-dog', icon: '👩‍🍳', name: 'Chef F', cost: 12 },
+                    { id: '205', css: 'sticker-dog', icon: '👨‍🍳', name: 'Chef M', cost: 12 },
+                    { id: '206', css: 'sticker-dog', icon: '👩‍💻', name: 'Programadora', cost: 12 },
+                    { id: '207', css: 'sticker-dog', icon: '👨‍💻', name: 'Programador', cost: 12 },
+                    { id: '208', css: 'sticker-dog', icon: '👩‍🔬', name: 'Científica', cost: 14 },
+                    { id: '209', css: 'sticker-dog', icon: '🧑‍🔬', name: 'Científico', cost: 14 },
+                    { id: '210', css: 'sticker-dog', icon: '👨‍🔬', name: 'Investigador', cost: 14 },
+                    { id: '211', css: 'sticker-dog', icon: '👩‍⚕️', name: 'Doctora', cost: 14 },
+                    { id: '212', css: 'sticker-dog', icon: '👨‍⚕️', name: 'Doctor', cost: 14 },
+                    { id: '213', css: 'sticker-dog', icon: '🧞‍♂️', name: 'Genio', cost: 15 },
+                    { id: '214', css: 'sticker-dog', icon: '🧜‍♀️', name: 'Sirena', cost: 15 },
+                    { id: '215', css: 'sticker-dog', icon: '🧜‍♂️', name: 'Tritón', cost: 15 }
+                ]
+            },
+            {
+                category: '🌸 Naturaleza, Flores & Clima',
+                items: [
+                    { id: '301', css: 'sticker-star', icon: '🌸', name: 'Flor cerezo', cost: 8 },
+                    { id: '302', css: 'sticker-star', icon: '🥀', name: 'Rosa marchita', cost: 8 },
+                    { id: '303', css: 'sticker-star', icon: '🪻', name: 'Jacinto', cost: 8 },
+                    { id: '304', css: 'sticker-star', icon: '🌼', name: 'Margarita', cost: 8 },
+                    { id: '305', css: 'sticker-star', icon: '🌻', name: 'Girasol', cost: 10 },
+                    { id: '306', css: 'sticker-star', icon: '🪷', name: 'Loto', cost: 10 },
+                    { id: '307', css: 'sticker-star', icon: '🌷', name: 'Tulipán', cost: 8 },
+                    { id: '308', css: 'sticker-star', icon: '🪴', name: 'Planta', cost: 10 },
+                    { id: '309', css: 'sticker-star', icon: '🍀', name: 'Trébol', cost: 10 },
+                    { id: '310', css: 'sticker-star', icon: '💐', name: 'Ramo', cost: 12 },
+                    { id: '311', css: 'sticker-star', icon: '🌹', name: 'Rosa', cost: 10 },
+                    { id: '312', css: 'sticker-star', icon: '🌺', name: 'Hibisco', cost: 10 },
+                    { id: '313', css: 'sticker-fire', icon: '🔥', name: 'Fuego', cost: 12 },
+                    { id: '314', css: 'sticker-star', icon: '💫', name: 'Mareo', cost: 8 },
+                    { id: '315', css: 'sticker-star', icon: '⭐️', name: 'Estrella', cost: 8 },
+                    { id: '316', css: 'sticker-star', icon: '🌟', name: 'Estrella brillante', cost: 10 },
+                    { id: '317', css: 'sticker-star', icon: '💥', name: 'Explosión', cost: 10 },
+                    { id: '318', css: 'sticker-star', icon: '🌕', name: 'Luna llena', cost: 10 },
+                    { id: '319', css: 'sticker-star', icon: '🌑', name: 'Luna nueva', cost: 8 },
+                    { id: '320', css: 'sticker-star', icon: '☀️', name: 'Sol', cost: 10 },
+                    { id: '321', css: 'sticker-star', icon: '🌧️', name: 'Lluvia', cost: 10 }
+                ]
+            },
+            {
+                category: '🏫 Edificios, Herramientas & Oficina',
+                items: [
+                    { id: '401', css: 'sticker-gear', icon: '🏥', name: 'Hospital', cost: 15 },
+                    { id: '402', css: 'sticker-gear', icon: '🏫', name: 'Escuela', cost: 12 },
+                    { id: '403', css: 'sticker-gear', icon: '🏨', name: 'Hotel', cost: 12 },
+                    { id: '404', css: 'sticker-gear', icon: '🏪', name: 'Tienda', cost: 10 },
+                    { id: '405', css: 'sticker-gear', icon: '🏢', name: 'Edificio', cost: 12 },
+                    { id: '406', css: 'sticker-gear', icon: '⌛️', name: 'Reloj arena', cost: 10 },
+                    { id: '407', css: 'sticker-gear', icon: '🕯️', name: 'Vela', cost: 8 },
+                    { id: '408', css: 'sticker-gear', icon: '⚖️', name: 'Balanza', cost: 12 },
+                    { id: '409', css: 'sticker-gear', icon: '🔧', name: 'Llave inglesa', cost: 10 },
+                    { id: '410', css: 'sticker-gear', icon: '🔨', name: 'Martillo', cost: 10 },
+                    { id: '411', css: 'sticker-gear', icon: '🛠️', name: 'Herramientas', cost: 12 },
+                    { id: '412', css: 'sticker-gear', icon: '🔑', name: 'Llave', cost: 10 },
+                    { id: '413', css: 'sticker-gear', icon: '🪞', name: 'Espejo', cost: 10 },
+                    { id: '414', css: 'sticker-gear', icon: '🧸', name: 'Peluche', cost: 10 },
+                    { id: '415', css: 'sticker-gear', icon: '📊', name: 'Gráfica', cost: 10 },
+                    { id: '416', css: 'sticker-gear', icon: '📈', name: 'Tendencia', cost: 10 },
+                    { id: '417', css: 'sticker-gear', icon: '📚', name: 'Libros', cost: 10 },
+                    { id: '418', css: 'sticker-gear', icon: '📖', name: 'Libro abierto', cost: 10 },
+                    { id: '419', css: 'sticker-gear', icon: '🔖', name: 'Marcapáginas', cost: 8 },
+                    { id: '420', css: 'sticker-gear', icon: '📌', name: 'Chincheta', cost: 8 },
+                    { id: '421', css: 'sticker-gear', icon: '✂️', name: 'Tijeras', cost: 8 },
+                    { id: '422', css: 'sticker-gear', icon: '✏️', name: 'Lápiz', cost: 8 }
+                ]
+            },
+            {
+                category: '🐾 Animales & Mascotas Tiernas',
+                items: [
+                    { id: '501', css: 'sticker-dog', icon: '🦖', name: 'T-Rex', cost: 15 },
+                    { id: '502', css: 'sticker-dog', icon: '🦕', name: 'Saurio', cost: 15 },
+                    { id: '503', css: 'sticker-dog', icon: '🐶', name: 'Perrito', cost: 12 },
+                    { id: '504', css: 'sticker-dog', icon: '🐱', name: 'Gatito', cost: 12 },
+                    { id: '505', css: 'sticker-dog', icon: '🐭', name: 'Ratón', cost: 10 },
+                    { id: '506', css: 'sticker-dog', icon: '🐹', name: 'Hámster', cost: 10 },
+                    { id: '507', css: 'sticker-dog', icon: '🐼', name: 'Panda', cost: 14 },
+                    { id: '508', css: 'sticker-dog', icon: '🐻', name: 'Oso', cost: 12 },
+                    { id: '509', css: 'sticker-dog', icon: '🐰', name: 'Conejo', cost: 12 },
+                    { id: '510', css: 'sticker-dog', icon: '🐨', name: 'Koala', cost: 14 },
+                    { id: '511', css: 'sticker-dog', icon: '🐯', name: 'Tigre', cost: 14 },
+                    { id: '512', css: 'sticker-dog', icon: '🦁', name: 'León', cost: 14 },
+                    { id: '513', css: 'sticker-dog', icon: '🐸', name: 'Rana', cost: 10 },
+                    { id: '514', css: 'sticker-dog', icon: '🐵', name: 'Mono', cost: 12 },
+                    { id: '515', css: 'sticker-dog', icon: '🐣', name: 'Pollo', cost: 10 },
+                    { id: '516', css: 'sticker-dog', icon: '🐙', name: 'Pulpo', cost: 12 },
+                    { id: '517', css: 'sticker-dog', icon: '🐍', name: 'Serpiente', cost: 10 },
+                    { id: '518', css: 'sticker-dog', icon: '🐳', name: 'Ballena', cost: 14 },
+                    { id: '519', css: 'sticker-dog', icon: '🦭', name: 'Foca', cost: 12 },
+                    { id: '520', css: 'sticker-dog', icon: '🐿️', name: 'Ardilla', cost: 10 }
+                ]
+            }
+        ];
+
+        function getAllStickers() {
+            let all = [];
+            stickerCategories.forEach(cat => all.push(...cat.items));
+            return all;
+        }
+
+        function updateHeader() {
+            document.getElementById('user-coins').innerText = userCoins;
+            document.getElementById('user-streak').innerText = userStreak;
+            localStorage.setItem('nextup_coins', userCoins);
+            localStorage.setItem('nextup_streak', userStreak);
+            localStorage.setItem('nextup_blocks', JSON.stringify(blocks));
+            localStorage.setItem('nextup_unlocked', JSON.stringify(unlockedStickers));
+            updateAccountCode();
+        }
+
+        function setTheme(themeName) {
+            currentTheme = themeName;
+            document.body.className = themeName;
+            localStorage.setItem('nextup_theme', themeName);
+        }
+
+        function updateAccountCode() {
+            let accountData = {
+                coins: userCoins,
+                streak: userStreak,
+                blocks: blocks,
+                unlocked: unlockedStickers,
+                notes: localStorage.getItem('nextup_notes') || '',
+                theme: currentTheme
+            };
+            let encodedCode = btoa(encodeURIComponent(JSON.stringify(accountData)));
+            document.getElementById('account-code-box').value = encodedCode;
+        }
+
+        function copyAccountCode() {
+            let box = document.getElementById('account-code-box');
+            box.select();
+            document.execCommand('copy');
+            alert("📋 ¡Código de cuenta copiado al portapapeles! Guárdalo bien.");
+        }
+
+        function importAccountCode() {
+            let code = prompt("Pega aquí tu código único de cuenta para restaurar tus datos:");
+            if(!code) return;
+            try {
+                let decodedData = JSON.parse(decodeURIComponent(atob(code.trim())));
+                userCoins = decodedData.coins || 15;
+                userStreak = decodedData.streak || 1;
+                blocks = decodedData.blocks || [];
+                unlockedStickers = decodedData.unlocked || ['101', '001', '503'];
+                if(decodedData.notes) localStorage.setItem('nextup_notes', decodedData.notes);
+                if(decodedData.theme) setTheme(decodedData.theme);
+                
+                updateHeader();
+                renderMainView();
+                alert("🎉 ¡Cuenta restaurada con éxito!");
+            } catch(e) {
+                alert("❌ Código no válido. Verifica que esté completo.");
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(tabId === 'board') {
+                if(activeBlockId) renderDetailView(activeBlockId);
+                else renderMainView();
+            }
+            if(tabId === 'shop') renderShop();
+            if(tabId === 'whiteboard') resizeCanvas();
+        }
+
+        function addStudyBlock() {
+            let nameInput = document.getElementById('new-block-name');
+            let name = nameInput.value.trim();
+            if(!name) { alert("⚠️ Escribe el nombre del bloque."); return; }
+
+            blocks.push({
+                id: Date.now(),
+                name: name,
+                sticker: 'sticker-dog',
+                stickerId: '503',
+                tasks: []
+            });
+            nameInput.value = "";
+            updateHeader();
+            renderMainView();
+        }
+
+        function deleteBlock(blockId) {
+            if(confirm("¿Eliminar este bloque completo?")) {
+                blocks = blocks.filter(b => b.id !== blockId);
+                activeBlockId = null;
+                updateHeader();
+                renderMainView();
+            }
+        }
+
+        function moveBlock(index, direction) {
+            let newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= blocks.length) return;
+            let temp = blocks[index];
+            blocks[index] = blocks[newIndex];
+            blocks[newIndex] = temp;
+            updateHeader();
+            renderMainView();
+        }
+
+        function openBlock(blockId) {
+            activeBlockId = blockId;
+            renderDetailView(blockId);
+        }
+
+        function closeBlockView() {
+            activeBlockId = null;
+            renderMainView();
+        }
+
+        function addTaskToBlock(blockId) {
+            let title = prompt("Título de la tarea o tema:");
+            if(!title) return;
+            let block = blocks.find(b => b.id === blockId);
+            if(block) {
+                block.tasks.push({ id: Date.now(), title: title, status: 'todo' });
+                updateHeader();
+                renderDetailView(blockId);
+            }
+        }
+
+        function changeTaskStatus(blockId, taskId, newStatus) {
+            let block = blocks.find(b => b.id === blockId);
+            if(block) {
+                let task = block.tasks.find(t => t.id === taskId);
+                if(task) {
+                    if(newStatus === 'done' && task.status !== 'done') {
+                        userCoins += 5;
+                        alert("🎉 ¡Tarea dominada! +5 Monedas 🪙");
+                    }
+                    task.status = newStatus;
+                    updateHeader();
+                    renderDetailView(blockId);
+                }
+            }
+        }
+
+        function deleteTask(blockId, taskId) {
+            let block = blocks.find(b => b.id === blockId);
+            if(block) {
+                block.tasks = block.tasks.filter(t => t.id !== taskId);
+                updateHeader();
+                renderDetailView(blockId);
+            }
+        }
+
+        function changeBlockSticker(blockId) {
+            let block = blocks.find(b => b.id === blockId);
+            if(!block) return;
+
+            let availableList = unlockedStickers.map(id => {
+                let s = getAllStickers().find(item => item.id === id);
+                return s ? `ID [${s.id}] - ${s.name} ${s.icon}` : '';
+            }).join('\n');
+
+            let choice = prompt(`Escribe el número ID de 3 dígitos del sticker desbloqueado:\n${availableList}`);
+            if(choice && unlockedStickers.includes(choice)) {
+                let foundSticker = getAllStickers().find(s => s.id === choice);
+                if(foundSticker) {
+                    block.stickerId = foundSticker.id;
+                    block.sticker = foundSticker.css;
+                    updateHeader();
+                    renderMainView();
+                    if(activeBlockId) renderDetailView(activeBlockId);
+                }
+            } else if(choice) {
+                alert("⚠️ ID no válido o sticker no desbloqueado en tu inventario.");
+            }
+        }
+
+        function renderMainView() {
+            document.getElementById('main-view').style.display = 'block';
+            document.getElementById('detail-view').style.display = 'none';
+            let grid = document.getElementById('blocks-grid-container');
+            grid.innerHTML = "";
+
+            if(blocks.length === 0) {
+                grid.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1; text-align:center;">No hay bloques creados aún. ¡Crea el primero arriba!</p>`;
+                return;
+            }
+
+            blocks.forEach((b, index) => {
+                let stickerObj = getAllStickers().find(s => s.id === b.stickerId) || getAllStickers()[0];
+                let totalTasks = b.tasks.length;
+                let doneTasks = b.tasks.filter(t => t.status === 'done').length;
+
+                let deleteBtnHtml = b.isGuide ? `<button class="action-btn" style="background:var(--error); font-size:0.75rem;" onclick="deleteBlock(${b.id})" title="Borrar guía de bienvenida">🗑️ Borrar Guía</button>` : `<button class="action-btn" style="background:#374151; font-size:0.75rem;" onclick="changeBlockSticker(${b.id})">🎨 Sticker (ID)</button>`;
+
+                grid.innerHTML += `
+                    <div class="subject-card" style="${b.isGuide ? 'border: 2px dashed var(--accent);' : ''}">
+                        <div class="subject-header">
+                            <div class="subject-title-area" onclick="openBlock(${b.id})">
+                                <span class="${stickerObj.css}">${stickerObj.icon}</span>
+                                <span class="subject-title">${b.name}</span>
+                            </div>
+                            <div class="priority-controls">
+                                <button class="action-btn" title="Subir prioridad" onclick="moveBlock(${index}, -1)">⬆️</button>
+                                <button class="action-btn" title="Bajar prioridad" onclick="moveBlock(${index}, 1)">⬇️</button>
+                            </div>
+                        </div>
+                        <div class="subject-info" onclick="openBlock(${b.id})" style="cursor:pointer;">
+                            ${b.isGuide ? '✨ Tarjeta interactiva de instrucciones (Haz clic)' : `📝 Tareas: ${doneTasks} / ${totalTasks} completadas`}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                            <span style="font-size: 0.75rem; color: var(--primary); font-weight: bold; cursor:pointer;" onclick="openBlock(${b.id})">Abrir Bloque ➡️</span>
+                            ${deleteBtnHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderDetailView(blockId) {
+            let block = blocks.find(b => b.id === blockId);
+            if(!block) { closeBlockView(); return; }
+
+            document.getElementById('main-view').style.display = 'none';
+            let detail = document.getElementById('detail-view');
+            detail.style.display = 'block';
+
+            let stickerObj = getAllStickers().find(s => s.id === block.stickerId) || getAllStickers()[0];
+            let todoTasks = block.tasks.filter(t => t.status === 'todo');
+            let progTasks = block.tasks.filter(t => t.status === 'progress');
+            let doneTasks = block.tasks.filter(t => t.status === 'done');
+
+            if (block.isGuide) {
+                detail.innerHTML = `
+                    <div class="block-detail-view">
+                        <button class="btn back-btn" onclick="closeBlockView()">⬅️ Volver a mis Bloques</button>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span class="${stickerObj.css}" style="font-size:2rem;">${stickerObj.icon}</span>
+                                <h2 style="margin:0; border:none; color:var(--accent);">${block.name}</h2>
+                            </div>
+                            <div>
+                                <button class="btn" style="padding:6px 12px; font-size:0.85rem;" onclick="addTaskToBlock(${block.id})">➕ Añadir Nota/Idea</button>
+                                <button class="btn" style="padding:6px 12px; font-size:0.85rem; background:var(--error);" onclick="deleteBlock(${block.id})">🗑️ Borrar Guía</button>
+                            </div>
+                        </div>
+
+                        <p style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">
+                            ✨ Lee las instrucciones organizadas abajo en las columnas. Puedes marcar como completadas las funciones que ya probaste o moverlas.
+                        </p>
+
+                        <div class="kanban-subgrid">
+                            <div class="kanban-col">
+                                <h4>📌 Por Conocer / Hacer (${todoTasks.length})</h4>
+                                <div class="task-list">${todoTasks.map(t => renderTaskCard(block.id, t)).join('')}</div>
+                            </div>
+                            <div class="kanban-col">
+                                <h4>⏳ Probando (${progTasks.length})</h4>
+                                <div class="task-list">${progTasks.map(t => renderTaskCard(block.id, t)).join('')}</div>
+                            </div>
+                            <div class="kanban-col">
+                                <h4>🎉 ¡Entendido! (${doneTasks.length})</h4>
+                                <div class="task-list">${doneTasks.map(t => renderTaskCard(block.id, t)).join('')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            detail.innerHTML = `
+                <div class="block-detail-view">
+                    <button class="btn back-btn" onclick="closeBlockView()">⬅️ Volver a mis Bloques</button>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span class="${stickerObj.css}" title="Cambiar sticker" style="cursor:pointer;" onclick="changeBlockSticker(${block.id})">${stickerObj.icon}</span>
+                            <h2 style="margin:0; border:none;">${block.name}</h2>
+                        </div>
+                        <div>
+                            <button class="btn" style="padding:6px 12px; font-size:0.85rem;" onclick="addTaskToBlock(${block.id})">➕ Añadir Tarea</button>
+                            <button class="btn" style="padding:6px 12px; font-size:0.85rem; background:#374151;" onclick="changeBlockSticker(${block.id})">🎨 Sticker (ID)</button>
+                            <button class="btn" style="padding:6px 12px; font-size:0.85rem; background:var(--error);" onclick="deleteBlock(${block.id})">🗑️ Eliminar Bloque</button>
+                        </div>
+                    </div>
+
+                    <div class="kanban-subgrid">
+                        <div class="kanban-col">
+                            <h4>📌 Por Hacer (${todoTasks.length})</h4>
+                            <div class="task-list">${todoTasks.map(t => renderTaskCard(block.id, t)).join('')}</div>
+                        </div>
+                        <div class="kanban-col">
+                            <h4>⏳ En Proceso (${progTasks.length})</h4>
+                            <div class="task-list">${progTasks.map(t => renderTaskCard(block.id, t)).join('')}</div>
+                        </div>
+                        <div class="kanban-col">
+                            <h4>🎉 Dominado (${doneTasks.length})</h4>
+                            <div class="task-list">${doneTasks.map(t => renderTaskCard(block.id, t)).join('')}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTaskCard(blockId, task) {
+            return `
+                <div class="task-card">
+                    <div>${task.title}</div>
+                    <div class="task-footer">
+                        <span>ID: ${task.id.toString().slice(-4)}</span>
+                        <div class="task-actions">
+                            ${task.status !== 'todo' ? `<button class="action-btn" onclick="changeTaskStatus(${blockId}, ${task.id}, 'todo')">⬅️</button>` : ''}
+                            ${task.status !== 'progress' ? `<button class="action-btn" onclick="changeTaskStatus(${blockId}, ${task.id}, 'progress')">⏳</button>` : ''}
+                            ${task.status !== 'done' ? `<button class="action-btn" onclick="changeTaskStatus(${blockId}, ${task.id}, 'done')">✔️</button>` : ''}
+                            <button class="action-btn" style="background:#ef4444;" onclick="deleteTask(${blockId}, ${task.id})">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderShop() {
+            let container = document.getElementById('shop-categories-container');
+            container.innerHTML = "";
+
+            stickerCategories.forEach(cat => {
+                let html = `<div class="category-title">${cat.category}</div><div class="shop-grid">`;
+                cat.items.forEach(s => {
+                    let isOwned = unlockedStickers.includes(s.id);
+                    html += `
+                        <div class="shop-item">
+                            <div class="${s.css}" style="font-size:2rem; margin-bottom:6px;">${s.icon}</div>
+                            <div style="font-weight:bold; font-size:0.8rem;">[${s.id}] ${s.name}</div>
+                            <div style="color:var(--gold); font-size:0.75rem; margin:3px 0 8px;">${s.cost} 🪙</div>
+                            ${isOwned ? '<span style="color:var(--success); font-weight:bold; font-size:0.75rem;">Adquirido ✔️</span>' : `<button class="btn" style="padding:4px 8px; font-size:0.7rem;" onclick="buySticker('${s.id}', ${s.cost})">Comprar</button>`}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function buySticker(stickerId, cost) {
+            if(userCoins >= cost) {
+                userCoins -= cost;
+                unlockedStickers.push(stickerId);
+                updateHeader();
+                renderShop();
+                alert(`🎁 ¡Sticker con ID [${stickerId}] comprado con éxito y disponible en tu pizarra!`);
+            } else {
+                alert("❌ No tienes suficientes monedas. ¡Estudia y completa más tareas para ganarlas gratis!");
+            }
+        }
+
+        document.getElementById('quick-notes').value = localStorage.getItem('nextup_notes') || '';
+        function saveNotes() {
+            localStorage.setItem('nextup_notes', document.getElementById('quick-notes').value);
+            updateAccountCode();
+        }
+
+        // PIZARRA PROFESIONAL CON ZOOM Y ANTI-SELECCIÓN TACTIL/LÁPIZ
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+        let painting = false;
+        let currentTool = 'pencil';
+        let startX = 0, startY = 0;
+        let snapshot = null;
+        let wbZoom = 1.0;
+
+        function resizeCanvas() {
+            let wrapper = document.getElementById('canvas-area');
+            if (canvas.width === 0) {
+                canvas.width = wrapper.clientWidth * 2; // Alta resolución interna
+                canvas.height = 900;
+                canvas.style.width = wrapper.clientWidth + 'px';
+                canvas.style.height = '450px';
+            }
+        }
+
+        function zoomIn() {
+            if (wbZoom < 3.0) {
+                wbZoom += 0.25;
+                applyZoom();
+            }
+        }
+
+        function zoomOut() {
+            if (wbZoom > 0.5) {
+                wbZoom -= 0.25;
+                applyZoom();
+            }
+        }
+
+        function resetZoom() {
+            wbZoom = 1.0;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            let wrapper = document.getElementById('canvas-area');
+            let newWidth = wrapper.clientWidth * wbZoom;
+            let newHeight = 450 * wbZoom;
+            canvas.style.width = newWidth + 'px';
+            canvas.style.height = newHeight + 'px';
+            document.getElementById('zoom-level-label').innerText = Math.round(wbZoom * 100) + '%';
+        }
+
+        // Zoom con la rueda del mouse en la pizarra
+        document.getElementById('canvas-area').addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        }, { passive: false });
+
+        function setWbTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.wb-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tool-' + tool).classList.add('active');
+
+            let colorWrapper = document.getElementById('color-picker-wrapper');
+            if (tool === 'pencil') {
+                colorWrapper.style.display = 'none';
+            } else {
+                colorWrapper.style.display = 'flex';
+            }
+        }
+
+        function startPosition(e) {
+            e.preventDefault(); // Evita selección azul y comportamiento por defecto de la tablet
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            // Coordenadas corregidas según el nivel de zoom y tamaño interno del canvas
+            let scaleX = canvas.width / rect.width;
+            let scaleY = canvas.height / rect.height;
+
+            startX = (clientX - rect.left) * scaleX;
+            startY = (clientY - rect.top) * scaleY;
+
+            if (currentTool === 'text') {
+                let userText = prompt("Escribe tu texto para la pizarra:");
+                if (userText) {
+                    let color = document.getElementById('wb-color').value;
+                    ctx.font = `${18 * (canvas.width / rect.width)}px 'Segoe UI', sans-serif`;
+                    ctx.fillStyle = color;
+                    ctx.fillText(userText, startX, startY);
+                }
+                return;
+            }
+
+            painting = true;
+            snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            if (currentTool !== 'shape') {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+            }
+        }
+
+        function endPosition(e) {
+            if (!painting) return;
+            if (currentTool === 'shape') {
+                let rect = canvas.getBoundingClientRect();
+                let clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+                let clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+                let scaleX = canvas.width / rect.width;
+                let scaleY = canvas.height / rect.height;
+                let endX = (clientX - rect.left) * scaleX;
+                let endY = (clientY - rect.top) * scaleY;
+
+                ctx.putImageData(snapshot, 0, 0);
+                let color = document.getElementById('wb-color').value;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+            }
+            painting = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!painting) return;
+            e.preventDefault();
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            let scaleX = canvas.width / rect.width;
+            let scaleY = canvas.height / rect.height;
+            let x = (clientX - rect.left) * scaleX;
+            let y = (clientY - rect.top) * scaleY;
+
+            let color = document.getElementById('wb-color').value;
+
+            if (currentTool === 'shape') {
+                ctx.putImageData(snapshot, 0, 0);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(startX, startY, x - startX, y - startY);
+                return;
+            }
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'pencil') {
+                ctx.strokeStyle = '#1f2937';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 1.0;
+            } else if (currentTool === 'pen') {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 5;
+                ctx.globalAlpha = 1.0;
+            } else if (currentTool === 'marker') {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 14;
+                ctx.globalAlpha = 1.0;
+            } else if (currentTool === 'highlighter') {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 30;
+                ctx.globalAlpha = 0.35;
+            } else if (currentTool === 'eraser') {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 35;
+                ctx.globalAlpha = 1.0;
+            }
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', startPosition);
+        canvas.addEventListener('mouseup', endPosition);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchstart', startPosition, { passive: false });
+        canvas.addEventListener('touchend', endPosition);
+        canvas.addEventListener('touchmove', draw, { passive: false });
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.querySelectorAll('.canvas-sticker-item').forEach(el => el.remove());
+        }
+
+        function addStickerToBoard() {
+            let availableList = unlockedStickers.map(id => {
+                let s = getAllStickers().find(item => item.id === id);
+                return s ? `ID [${s.id}] - ${s.name} ${s.icon}` : '';
+            }).join('\n');
+
+            let choice = prompt(`Elige el ID de tu sticker comprado para colocarlo en la pizarra:\n${availableList}`);
+            if(choice && unlockedStickers.includes(choice)) {
+                let foundSticker = getAllStickers().find(s => s.id === choice);
+                if(foundSticker) {
+                    createDraggableSticker(foundSticker.icon, foundSticker.css);
+                }
+            } else if(choice) {
+                alert("⚠️ ID no válido o sticker no adquirido.");
+            }
+        }
+
+        function createDraggableSticker(icon, cssClass, posX = 50, posY = 50, size = 2.5) {
+            let area = document.getElementById('canvas-area');
+            let item = document.createElement('div');
+            item.className = `canvas-sticker-item ${cssClass}`;
+            item.style.left = posX + 'px';
+            item.style.top = posY + 'px';
+            item.style.fontSize = size + 'rem';
+            item.innerHTML = `
+                <div class="sticker-content" style="cursor: move;">${icon}</div>
+                <div style="font-size:0.6rem; display:flex; gap:2px; background:rgba(0,0,0,0.6); padding:2px; border-radius:4px;">
+                    <button onclick="resizeSticker(this, 0.5)" style="cursor:pointer; background:none; border:none; color:#fff;">➕</button>
+                    <button onclick="resizeSticker(this, -0.5)" style="cursor:pointer; background:none; border:none; color:#fff;">➖</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="cursor:pointer; background:none; border:none; color:#ff4444;">❌</button>
+                </div>
+            `;
+
+            let isDragging = false, startX, startY;
+            item.onmousedown = function(e) {
+                if(e.target.tagName === 'BUTTON') return;
+                isDragging = true;
+                startX = e.clientX - item.offsetLeft;
+                startY = e.clientY - item.offsetTop;
+                e.stopPropagation();
+            };
+            document.onmousemove = function(e) {
+                if (!isDragging) return;
+                item.style.left = (e.clientX - startX) + 'px';
+                item.style.top = (e.clientY - startY) + 'px';
+            };
+            document.onmouseup = function() { isDragging = false; };
+
+            area.appendChild(item);
+        }
+
+        function resizeSticker(btn, delta) {
+            let stickerWrapper = btn.parentElement.parentElement;
+            let currentSize = parseFloat(window.getComputedStyle(stickerWrapper).fontSize);
+            let newSize = (currentSize / 16) + delta;
+            if(newSize >= 1.5 && newSize <= 6) {
+                stickerWrapper.style.fontSize = newSize + 'rem';
+            }
+        }
+
+        const postItColors = [
+            { name: 'Amarillo', bg: '#fef08a', text: '#713f12' },
+            { name: 'Azul', bg: '#bae6fd', text: '#0369a1' },
+            { name: 'Rojo', bg: '#fecaca', text: '#991b1b' },
+            { name: 'Negro', bg: '#1f2937', text: '#f3f4f6' },
+            { name: 'Blanco', bg: '#ffffff', text: '#111827' },
+            { name: 'Morado', bg: '#e9d5ff', text: '#6b21a8' },
+            { name: 'Rosado', bg: '#fbcfe8', text: '#9d174d' },
+            { name: 'Naranja', bg: '#ffedd5', text: '#9a3412' },
+            { name: 'Verde', bg: '#d1fae5', text: '#065f46' },
+            { name: 'Gris', bg: '#e5e7eb', text: '#374151' }
+        ];
+
+        let postIts = JSON.parse(localStorage.getItem('nextup_postits')) || [
+            { id: 1, text: '¡Recordar examen de Anatomía!', colorIdx: 0 }
+        ];
+
+        function renderPostIts() {
+            let container = document.getElementById('postits-container');
+            container.innerHTML = "";
+            postIts.forEach(p => {
+                let theme = postItColors[p.colorIdx] || postItColors[0];
+                container.innerHTML += `
+                    <div class="postit-card" style="background-color: ${theme.bg}; color: ${theme.text};">
+                        <div class="postit-header">
+                            <select onchange="changePostItColor(${p.id}, this.value)" style="background: rgba(0,0,0,0.08); color: ${theme.text}; border: none; padding: 2px 4px; border-radius: 4px; font-size: 0.75rem;">
+                                ${postItColors.map((c, idx) => `<option value="${idx}" ${idx === p.colorIdx ? 'selected' : ''}>${c.name}</option>`).join('')}
+                            </select>
+                            <button onclick="deletePostIt(${p.id})" style="background: transparent; border: none; color: ${theme.text}; cursor:pointer; font-weight:bold;">×</button>
+                        </div>
+                        <textarea class="postit-textarea" style="color: ${theme.text};" oninput="updatePostItText(${p.id}, this.value)">${p.text}</textarea>
+                    </div>
+                `;
+            });
+            localStorage.setItem('nextup_postits', JSON.stringify(postIts));
+            updateAccountCode();
+        }
+
+        function addPostIt() {
+            postIts.push({ id: Date.now(), text: 'Nueva nota rápida...', colorIdx: Math.floor(Math.random() * postItColors.length) });
+            renderPostIts();
+        }
+
+        function updatePostItText(id, newText) {
+            let item = postIts.find(p => p.id === id);
+            if(item) {
+                item.text = newText;
+                localStorage.setItem('nextup_postits', JSON.stringify(postIts));
+                updateAccountCode();
+            }
+        }
+
+        function changePostItColor(id, colorIdx) {
+            let item = postIts.find(p => p.id === id);
+            if(item) {
+                item.colorIdx = parseInt(colorIdx);
+                renderPostIts();
+            }
+        }
+
+        function deletePostIt(id) {
+            postIts = postIts.filter(p => p.id !== id);
+            renderPostIts();
+        }
+
+        window.onload = function() {
+            updateHeader();
+            renderMainView();
+            renderPostIts();
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
